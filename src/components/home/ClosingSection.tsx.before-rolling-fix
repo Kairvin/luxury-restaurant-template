@@ -1,0 +1,437 @@
+"use client";
+
+import Image from "next/image";
+
+import {
+  useLayoutEffect,
+  useRef,
+} from "react";
+
+import gsap from "gsap";
+
+import {
+  ScrollTrigger,
+} from "gsap/ScrollTrigger";
+
+import type {
+  ClosingSectionContent,
+} from "@/types/homepage";
+
+import {
+  Container,
+} from "@/components/ui/Container";
+
+import {
+  PremiumHoverLink,
+} from "@/components/ui/PremiumHoverLink";
+
+gsap.registerPlugin(
+  ScrollTrigger
+);
+
+export function ClosingSection({
+  content,
+  index,
+}: {
+  content:
+    ClosingSectionContent;
+
+  index: number;
+}) {
+
+  const rootRef =
+    useRef<HTMLElement>(null);
+
+  const incomingRef =
+    useRef<HTMLDivElement>(null);
+
+  const contentRef =
+    useRef<HTMLDivElement>(null);
+
+
+  useLayoutEffect(() => {
+
+    const reducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+    if (reducedMotion) {
+      return;
+    }
+
+
+    const context =
+      gsap.context(() => {
+
+        /*
+         * Same fast incoming movement.
+         */
+
+        gsap.fromTo(
+          incomingRef.current,
+
+          {
+            y: () =>
+              window.innerHeight *
+              0.055,
+          },
+
+          {
+            y:
+              0,
+
+            ease:
+              "none",
+
+            scrollTrigger: {
+
+              trigger:
+                rootRef.current,
+
+              start:
+                "top bottom",
+
+              end: () =>
+                `+=${
+                  window.innerHeight *
+                  0.12
+                }`,
+
+              scrub:
+                0.32,
+
+              invalidateOnRefresh:
+                true,
+            },
+          }
+        );
+
+
+        gsap.fromTo(
+          contentRef.current,
+
+          {
+            y:
+              50,
+
+            opacity:
+              0,
+          },
+
+          {
+            y:
+              0,
+
+            opacity:
+              1,
+
+            duration:
+              1.2,
+
+            ease:
+              "power4.out",
+
+            scrollTrigger: {
+
+              trigger:
+                rootRef.current,
+
+              start:
+                "top 68%",
+            },
+          }
+        );
+
+      }, rootRef);
+
+
+    return () =>
+      context.revert();
+
+  }, []);
+
+
+  const mask =
+    "linear-gradient(to bottom, transparent 0svh, rgba(0,0,0,0.18) 2svh, rgba(0,0,0,0.68) 6svh, #000 10svh, #000 100%)";
+
+
+  return (
+
+    <section
+      id={
+        content.id
+      }
+
+      ref={
+        rootRef
+      }
+
+      className={[
+        "relative",
+
+        "h-svh",
+
+        "overflow-visible",
+
+        "bg-background",
+
+        "text-white",
+      ].join(" ")}
+
+      style={{
+        zIndex:
+          20 +
+          index * 10,
+      }}
+    >
+
+      <div
+        ref={
+          incomingRef
+        }
+
+        className={[
+          "absolute",
+
+          "left-0",
+
+          "top-[-12svh]",
+
+          "h-[112svh]",
+
+          "w-full",
+
+          "overflow-hidden",
+
+          "will-change-transform",
+        ].join(" ")}
+
+        style={{
+          maskImage:
+            mask,
+
+          WebkitMaskImage:
+            mask,
+        }}
+      >
+
+        {content.image && (
+
+          <Image
+            src={
+              content.image.src
+            }
+
+            alt={
+              content.image.alt
+            }
+
+            fill
+
+            sizes="100vw"
+
+            className="object-cover"
+          />
+
+        )}
+
+
+        <div
+          aria-hidden="true"
+
+          className={[
+            "absolute",
+
+            "inset-0",
+
+            "bg-black/76",
+          ].join(" ")}
+        />
+
+
+        <div
+          aria-hidden="true"
+
+          className={[
+            "absolute",
+
+            "inset-0",
+
+            "bg-[radial-gradient(circle_at_25%_50%,rgba(140,0,20,0.34),transparent_45%)]",
+          ].join(" ")}
+        />
+
+
+        <div
+          className={[
+            "absolute",
+
+            "left-0",
+
+            "right-0",
+
+            "top-[12svh]",
+
+            "h-svh",
+          ].join(" ")}
+        >
+
+          <Container
+            className={[
+              "flex",
+
+              "h-full",
+
+              "flex-col",
+
+              "justify-end",
+
+              "pb-10",
+
+              "pt-32",
+            ].join(" ")}
+          >
+
+            <div
+              ref={
+                contentRef
+              }
+
+              className="pb-[9vh]"
+            >
+
+              {content.scriptAccent && (
+
+                <p
+                  className={[
+                    "font-accent",
+
+                    "text-6xl",
+
+                    "leading-none",
+
+                    "text-primary",
+
+                    "md:text-8xl",
+                  ].join(" ")}
+                >
+                  {
+                    content.scriptAccent
+                  }
+                </p>
+
+              )}
+
+
+              <div
+                className={[
+                  "mt-7",
+
+                  "flex",
+
+                  "flex-col",
+
+                  "gap-10",
+
+                  "lg:flex-row",
+
+                  "lg:items-end",
+
+                  "lg:justify-between",
+                ].join(" ")}
+              >
+
+                <h2
+                  className={[
+                    "max-w-[950px]",
+
+                    "font-display",
+
+                    "text-[clamp(4rem,8vw,9rem)]",
+
+                    "leading-[0.82]",
+
+                    "tracking-[-0.06em]",
+                  ].join(" ")}
+                >
+                  {
+                    content.title
+                  }
+                </h2>
+
+
+                {content.action && (
+
+                  <PremiumHoverLink
+                    href={
+                      content.action
+                        .href
+                    }
+                  >
+                    {
+                      content.action
+                        .label
+                    }
+                  </PremiumHoverLink>
+
+                )}
+
+              </div>
+
+            </div>
+
+
+            <footer
+              id="contact"
+
+              className={[
+                "grid",
+
+                "gap-6",
+
+                "border-t",
+
+                "border-white/15",
+
+                "pt-5",
+
+                "font-body",
+
+                "text-[9px]",
+
+                "uppercase",
+
+                "tracking-[0.18em]",
+
+                "text-white/45",
+
+                "md:grid-cols-3",
+              ].join(" ")}
+            >
+
+              <span>
+                ROUGE
+              </span>
+
+              <span className="md:text-center">
+                New York · United States
+              </span>
+
+              <span className="md:text-right">
+                © 2026
+              </span>
+
+            </footer>
+
+          </Container>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  );
+
+}

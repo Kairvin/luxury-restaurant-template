@@ -1,26 +1,324 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* -------------------------------------------------------------------------- */
+/*                        Tailwind Semantic Design Tokens                      */
+/* -------------------------------------------------------------------------- */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--site-background);
+
+  --color-surface: var(--site-surface);
+
+  --color-surface-elevated:
+    var(--site-surface-elevated);
+
+  --color-primary: var(--site-primary);
+
+  --color-primary-hover:
+    var(--site-primary-hover);
+
+  --color-foreground:
+    var(--site-text);
+
+  --color-muted:
+    var(--site-text-muted);
+
+  --color-border:
+    var(--site-border);
+
+  --color-reservation-background:
+    var(--site-reservation-background);
+
+  --color-reservation-text:
+    var(--site-reservation-text);
+
+  --font-display:
+    var(--site-font-display);
+
+  --font-body:
+    var(--site-font-body);
+
+  --font-accent:
+    var(--site-font-accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* -------------------------------------------------------------------------- */
+/*                                  Reset                                     */
+/* -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+
+  background:
+    var(--site-background);
+
+  color:
+    var(--site-text);
+
+  scrollbar-color:
+    var(--site-text-muted)
+    var(--site-background);
+
+  /*
+   * Lenis owns smooth scrolling.
+   * `scroll-behavior: smooth` here would fight it.
+   */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+
+  margin: 0;
+
+  background:
+    var(--site-background);
+
+  color:
+    var(--site-text);
+
+  font-family:
+    var(--site-font-body),
+    Arial,
+    sans-serif;
+
+  text-rendering:
+    optimizeLegibility;
+
+  -webkit-font-smoothing:
+    antialiased;
+
+  -moz-osx-font-smoothing:
+    grayscale;
+}
+
+/*
+ * `clip` rather than `hidden`: it suppresses horizontal
+ * overflow without creating a scroll container, which would
+ * become the containing block for every `position: sticky`
+ * section and break the stack.
+ */
+html,
+body {
+  overflow-x: clip;
+
+  overscroll-behavior-y: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color:
+    transparent;
+
+  touch-action: manipulation;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Selection & Focus                                 */
+/* -------------------------------------------------------------------------- */
+
+::selection {
+  background:
+    var(--site-primary);
+
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline:
+    1px solid var(--site-text);
+
+  outline-offset:
+    4px;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             Typography Helpers                             */
+/* -------------------------------------------------------------------------- */
+
+.font-display {
+  font-family:
+    var(--site-font-display),
+    Georgia,
+    serif;
+}
+
+.font-body {
+  font-family:
+    var(--site-font-body),
+    Arial,
+    sans-serif;
+}
+
+.font-accent {
+  font-family:
+    var(--site-font-accent),
+    cursive;
+}
+
+/* ========================================================================== */
+/*                                   LENIS                                    */
+/* ========================================================================== */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+/*
+ * Scroll lock for full-screen overlays.
+ *
+ * Set by `useSmoothScroll().stop()`, and the only lock that
+ * applies when Lenis is disabled (reduced motion, or
+ * `theme.motion.smoothScroll: false`). `clip` again, so the
+ * sticky stack does not shift while the lock is held.
+ */
+html[data-scroll-locked] {
+  overflow: clip;
+}
+
+/* ========================================================================== */
+/*                             STACKED SECTIONS                               */
+/* ========================================================================== */
+
+/*
+ * Each card is a sticky, full-viewport layer. The incoming card
+ * slides over the pinned one while it remains fixed, scales
+ * down and dims — see `components/motion/StackedSections.tsx`.
+ *
+ * Layout lives in the component; only compositing hints and the
+ * reduced-motion fallback live here.
+ */
+
+[data-stack-card] {
+  isolation: isolate;
+
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/*
+ * Keep photography on its own composited layer so the scale of
+ * a receding card does not force a re-raster of the image.
+ */
+[data-stack-card] img {
+  transform: translateZ(0);
+
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* ========================================================================== */
+/*                                  MOTION                                    */
+/* ========================================================================== */
+
+/*
+ * Subtle editorial grain: stops large flat dark areas from
+ * feeling digitally empty without reading as a texture.
+ */
+body::before {
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  pointer-events: none;
+
+  opacity: 0.022;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
+}
+
+/* Pointer-follow effects never apply to touch. */
+@media (hover: none) {
+  a,
+  button {
+    transform: none !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          Reduced Motion Baseline                           */
+/* -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  /*
+   * Preserve the direct, scroll-controlled curtain while
+   * removing the additional scale/dim transforms. The incoming
+   * section still covers the pinned one without autonomous
+   * animation.
+   */
+  [data-stack-card] {
+    transform: none !important;
+  }
+
+  [data-stack-veil] {
+    display: none !important;
+  }
 }

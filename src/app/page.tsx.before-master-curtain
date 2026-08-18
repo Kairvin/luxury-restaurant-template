@@ -1,0 +1,121 @@
+import {
+  homepage,
+  restaurant,
+} from "@/site";
+
+import {
+  HeroSection,
+} from "@/components/home/HeroSection";
+
+import {
+  StackSection,
+} from "@/components/home/StackSection";
+
+import {
+  ClosingSection,
+} from "@/components/home/ClosingSection";
+
+import {
+  RollingPanel,
+} from "@/components/motion/RollingPanel";
+
+export default function HomePage() {
+  return (
+    <main
+      className={[
+        "relative",
+
+        "bg-background",
+      ].join(" ")}
+    >
+
+      {/*
+       * ================================================================
+       * SECTION 1
+       * ================================================================
+       *
+       * Hero is normal:
+       *
+       * scroll × 1.0
+       */}
+
+      <div
+        className={[
+          "relative",
+
+          "z-[1]",
+        ].join(" ")}
+      >
+        <HeroSection
+          content={
+            homepage.hero
+          }
+
+          restaurantName={
+            restaurant.identity.name
+          }
+        />
+      </div>
+
+
+      {/*
+       * ================================================================
+       * FOLLOWING SECTIONS
+       * ================================================================
+       *
+       * Their RollingPanel gives them:
+       *
+       * incoming = scroll × 1.2
+       *
+       * then after entrance:
+       *
+       * scroll × 1.0
+       */}
+
+      {homepage.sections.map(
+        (
+          section,
+          index
+        ) => (
+
+          <RollingPanel
+            key={
+              section.id
+            }
+
+            id={
+              section.id
+            }
+          >
+
+            {section.type ===
+            "closing" ? (
+
+              <ClosingSection
+                content={
+                  section
+                }
+              />
+
+            ) : (
+
+              <StackSection
+                section={
+                  section
+                }
+
+                index={
+                  index
+                }
+              />
+
+            )}
+
+          </RollingPanel>
+
+        )
+      )}
+
+    </main>
+  );
+}
