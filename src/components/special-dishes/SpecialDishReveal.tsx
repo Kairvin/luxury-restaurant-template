@@ -33,7 +33,7 @@ gsap.registerPlugin(
 /* -------------------------------------------------------------------------- */
 
 /**
- * The five art layers, back to front.
+ * The six art layers used across both courses.
  *
  * Measured from the files on disk:
  *
@@ -42,15 +42,16 @@ gsap.registerPlugin(
  *   cloud-right.png       1672 x 941   16:9    RGBA
  *   cloud-foreground.png  1672 x 941   16:9    RGBA
  *   hand-dish.png         1024 x 1536  2:3     RGBA
+ *   hand-pasta-dish.png   1024 x 1536  2:3     RGB, no alpha
  *
  * That alpha column is what dictates the compositing below, so
- * it is worth stating plainly: the backdrop is the *only* layer
- * without an alpha channel, which is why it — and only it —
- * carries `mix-blend-screen`. Screen discards black, so opaque
- * artwork on a black field still reads as haze. The two banks,
- * the low foreground bank and the dish all have genuine alpha
- * and composite normally, which is also why the dish can take a
- * real `drop-shadow`.
+ * it is worth stating plainly: the backdrop and pasta image are
+ * the two layers without an alpha channel, so both use
+ * `mix-blend-screen`. Screen treats black as neutral, allowing
+ * opaque artwork on a black field to sit naturally over the dark
+ * stage. The two banks, low foreground bank and first dish have
+ * genuine alpha and composite normally, which is also why the
+ * first dish can take a real `drop-shadow`.
  *
  * Swapping art:
  *
@@ -85,6 +86,8 @@ const REVEAL_ASSETS = {
     "/image_assets/cloud-foreground.png",
   handDish:
     "/image_assets/hand-dish.png",
+  handPastaDish:
+    "/image_assets/hand-pasta-dish.png",
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -127,7 +130,7 @@ const TUNING = {
    * moment the section starts to leave, and the viewer would
    * never actually see the picture they scrolled to assemble.
    */
-  revealFraction: 0.75,
+  revealFraction: 0.92,
 
   /** The "Part the clouds" title, which retires first. */
   openingNote: {
@@ -298,6 +301,97 @@ const TUNING = {
   },
 
   /**
+   * The next plate arrives as a continuation of the same pass.
+   * The foreground haze briefly swells into a natural wipe while
+   * the first composition lifts away and the pasta rises through
+   * it. The side banks stay parted so the sequence never feels
+   * like the opening animation has simply restarted.
+   */
+  secondCourse: {
+    position: 2.04,
+
+    firstCopyOut: {
+      y: -30,
+      duration: 0.46,
+      ease: "power2.in",
+    },
+
+    firstTicketOut: {
+      y: -24,
+      rotate: -2.2,
+      duration: 0.46,
+      ease: "power2.in",
+    },
+
+    firstSubjectOut: {
+      yPercent: -46,
+      scale: 0.94,
+      duration: 0.82,
+      ease: "power2.inOut",
+      position: 2.12,
+    },
+
+    hazeIn: {
+      autoAlpha: 0.82,
+      yPercent: -8,
+      scale: 1.16,
+      duration: 0.68,
+      ease: "power2.inOut",
+    },
+
+    hazeOut: {
+      autoAlpha: 0.24,
+      yPercent: 32,
+      scale: 1.08,
+      duration: 1,
+      ease: "power2.inOut",
+      position: 2.62,
+    },
+
+    subject: {
+      from: {
+        autoAlpha: 0,
+        xPercent: -50,
+        yPercent: 86,
+        scale: 0.96,
+      },
+      to: {
+        autoAlpha: 1,
+        xPercent: -50,
+        yPercent: 0,
+        scale: 1,
+      },
+      duration: 1.25,
+      ease: "power3.out",
+      position: 2.18,
+    },
+
+    copy: {
+      from: { autoAlpha: 0, y: 42 },
+      to: { autoAlpha: 1, y: 0 },
+      duration: 0.64,
+      ease: "power3.out",
+      position: 2.78,
+    },
+
+    ticket: {
+      from: {
+        autoAlpha: 0,
+        y: 38,
+        rotate: 1.8,
+      },
+      to: {
+        autoAlpha: 1,
+        y: 0,
+        rotate: 1.1,
+      },
+      duration: 0.58,
+      ease: "power3.out",
+      position: 2.94,
+    },
+  },
+
+  /**
    * Reduced motion keeps the user-controlled reveal, but drops
    * the scale changes and rotation. The essential directions
    * remain intact: clouds move sideways and the dish moves up.
@@ -308,6 +402,9 @@ const TUNING = {
 
     copyPosition: 0.62,
     copyDuration: 0.38,
+
+    secondPosition: 1.18,
+    secondCopyPosition: 1.86,
   },
 } as const;
 
@@ -399,6 +496,9 @@ export function SpecialDishReveal() {
   const subjectRef =
     useRef<HTMLDivElement>(null);
 
+  const secondSubjectRef =
+    useRef<HTMLDivElement>(null);
+
   const cloudLeftRef =
     useRef<HTMLDivElement>(null);
 
@@ -414,7 +514,13 @@ export function SpecialDishReveal() {
   const copyRef =
     useRef<HTMLDivElement>(null);
 
+  const secondCopyRef =
+    useRef<HTMLDivElement>(null);
+
   const ticketRef =
+    useRef<HTMLElement>(null);
+
+  const secondTicketRef =
     useRef<HTMLElement>(null);
 
   const scrollCueRef =
@@ -434,6 +540,8 @@ export function SpecialDishReveal() {
       backdropRef.current;
     const subject =
       subjectRef.current;
+    const secondSubject =
+      secondSubjectRef.current;
     const cloudLeft =
       cloudLeftRef.current;
     const cloudRight =
@@ -443,7 +551,11 @@ export function SpecialDishReveal() {
     const openingNote =
       openingNoteRef.current;
     const copy = copyRef.current;
+    const secondCopy =
+      secondCopyRef.current;
     const ticket = ticketRef.current;
+    const secondTicket =
+      secondTicketRef.current;
     const scrollCue =
       scrollCueRef.current;
 
@@ -452,12 +564,15 @@ export function SpecialDishReveal() {
       !stage ||
       !backdrop ||
       !subject ||
+      !secondSubject ||
       !cloudLeft ||
       !cloudRight ||
       !foreground ||
       !openingNote ||
       !copy ||
+      !secondCopy ||
       !ticket ||
+      !secondTicket ||
       !scrollCue
     ) {
       return;
@@ -504,12 +619,15 @@ export function SpecialDishReveal() {
         const layers = [
           backdrop,
           subject,
+          secondSubject,
           cloudLeft,
           cloudRight,
           foreground,
           openingNote,
           copy,
+          secondCopy,
           ticket,
+          secondTicket,
         ];
 
         const trigger = {
@@ -764,6 +882,147 @@ export function SpecialDishReveal() {
 
               TUNING.reduced
                 .copyPosition
+            )
+
+            /* A soft haze wipe carries the viewer into course two. */
+            .fromTo(
+              [copy, ticket],
+
+              { autoAlpha: 1, y: 0 },
+
+              {
+                immediateRender: false,
+                autoAlpha: 0,
+                y: -20,
+                duration: 0.34,
+              },
+
+              TUNING.reduced
+                .secondPosition
+            )
+
+            .fromTo(
+              foreground,
+
+              {
+                autoAlpha:
+                  TUNING.foreground
+                    .to.autoAlpha,
+                yPercent:
+                  TUNING.foreground
+                    .to.yPercent,
+              },
+
+              {
+                immediateRender: false,
+                autoAlpha: 0.75,
+                yPercent: -6,
+                duration: 0.5,
+              },
+
+              TUNING.reduced
+                .secondPosition
+            )
+
+            .fromTo(
+              subject,
+
+              {
+                autoAlpha: 1,
+                xPercent: -50,
+                yPercent: 0,
+              },
+
+              {
+                immediateRender: false,
+                autoAlpha: 0,
+                xPercent: -50,
+                yPercent: -38,
+                duration: 0.55,
+              },
+
+              TUNING.reduced
+                .secondPosition
+            )
+
+            .fromTo(
+              secondSubject,
+
+              {
+                autoAlpha: 0,
+                xPercent: -50,
+                yPercent:
+                  TUNING.secondCourse
+                    .subject.from
+                    .yPercent,
+              },
+
+              {
+                immediateRender: false,
+                autoAlpha: 1,
+                xPercent: -50,
+                yPercent: 0,
+                duration: 1,
+              },
+
+              TUNING.reduced
+                .secondPosition + 0.04
+            )
+
+            .fromTo(
+              foreground,
+
+              {
+                autoAlpha: 0.75,
+                yPercent: -6,
+              },
+
+              {
+                immediateRender: false,
+                autoAlpha:
+                  TUNING.secondCourse
+                    .hazeOut
+                    .autoAlpha,
+                yPercent:
+                  TUNING.secondCourse
+                    .hazeOut
+                    .yPercent,
+                duration: 0.72,
+              },
+
+              TUNING.reduced
+                .secondPosition + 0.44
+            )
+
+            .set(
+              secondSubject,
+
+              {
+                zIndex:
+                  TUNING.subject
+                    .liftZIndex,
+              },
+
+              TUNING.reduced
+                .secondPosition + 0.48
+            )
+
+            .fromTo(
+              [secondCopy, secondTicket],
+
+              { autoAlpha: 0, y: 24 },
+
+              {
+                immediateRender: false,
+                autoAlpha: 1,
+                y: 0,
+                duration:
+                  TUNING.reduced
+                    .copyDuration,
+              },
+
+              TUNING.reduced
+                .secondCopyPosition
             );
 
           return;
@@ -995,6 +1254,236 @@ export function SpecialDishReveal() {
             },
 
             TUNING.ticket.position
+          )
+
+          /* The first course clears while the haze rises as a wipe. */
+          .fromTo(
+            copy,
+
+            { ...TUNING.copy.to },
+
+            {
+              immediateRender: false,
+              autoAlpha: 0,
+              y:
+                TUNING.secondCourse
+                  .firstCopyOut.y,
+              ease:
+                TUNING.secondCourse
+                  .firstCopyOut.ease,
+              duration:
+                TUNING.secondCourse
+                  .firstCopyOut
+                  .duration,
+            },
+
+            TUNING.secondCourse.position
+          )
+
+          .fromTo(
+            ticket,
+
+            { ...TUNING.ticket.to },
+
+            {
+              immediateRender: false,
+              autoAlpha: 0,
+              y:
+                TUNING.secondCourse
+                  .firstTicketOut.y,
+              rotate:
+                TUNING.secondCourse
+                  .firstTicketOut
+                  .rotate,
+              ease:
+                TUNING.secondCourse
+                  .firstTicketOut.ease,
+              duration:
+                TUNING.secondCourse
+                  .firstTicketOut
+                  .duration,
+            },
+
+            TUNING.secondCourse.position
+          )
+
+          .fromTo(
+            foreground,
+
+            { ...TUNING.foreground.to },
+
+            {
+              immediateRender: false,
+              autoAlpha:
+                TUNING.secondCourse
+                  .hazeIn.autoAlpha,
+              yPercent:
+                TUNING.secondCourse
+                  .hazeIn.yPercent,
+              scale:
+                TUNING.secondCourse
+                  .hazeIn.scale,
+              ease:
+                TUNING.secondCourse
+                  .hazeIn.ease,
+              duration:
+                TUNING.secondCourse
+                  .hazeIn.duration,
+            },
+
+            TUNING.secondCourse.position
+          )
+
+          .fromTo(
+            subject,
+
+            { ...TUNING.subject.to },
+
+            {
+              immediateRender: false,
+              autoAlpha: 0,
+              xPercent: -50,
+              yPercent:
+                TUNING.secondCourse
+                  .firstSubjectOut
+                  .yPercent,
+              scale:
+                TUNING.secondCourse
+                  .firstSubjectOut.scale,
+              ease:
+                TUNING.secondCourse
+                  .firstSubjectOut.ease,
+              duration:
+                TUNING.secondCourse
+                  .firstSubjectOut
+                  .duration,
+            },
+
+            TUNING.secondCourse
+              .firstSubjectOut.position
+          )
+
+          /* The second dish rises through the crest of the haze. */
+          .fromTo(
+            secondSubject,
+
+            {
+              immediateRender: false,
+              ...TUNING.secondCourse
+                .subject.from,
+            },
+
+            {
+              ...TUNING.secondCourse
+                .subject.to,
+              ease:
+                TUNING.secondCourse
+                  .subject.ease,
+              duration:
+                TUNING.secondCourse
+                  .subject.duration,
+            },
+
+            TUNING.secondCourse
+              .subject.position
+          )
+
+          .set(
+            secondSubject,
+
+            {
+              zIndex:
+                TUNING.subject
+                  .liftZIndex,
+            },
+
+            2.54
+          )
+
+          .fromTo(
+            foreground,
+
+            {
+              immediateRender: false,
+              autoAlpha:
+                TUNING.secondCourse
+                  .hazeIn.autoAlpha,
+              yPercent:
+                TUNING.secondCourse
+                  .hazeIn.yPercent,
+              scale:
+                TUNING.secondCourse
+                  .hazeIn.scale,
+            },
+
+            {
+              autoAlpha:
+                TUNING.secondCourse
+                  .hazeOut.autoAlpha,
+              yPercent:
+                TUNING.secondCourse
+                  .hazeOut.yPercent,
+              scale:
+                TUNING.secondCourse
+                  .hazeOut.scale,
+              ease:
+                TUNING.secondCourse
+                  .hazeOut.ease,
+              duration:
+                TUNING.secondCourse
+                  .hazeOut.duration,
+            },
+
+            TUNING.secondCourse
+              .hazeOut.position
+          )
+
+          .fromTo(
+            secondCopy,
+
+            {
+              immediateRender: false,
+              ...TUNING.secondCourse
+                .copy.from,
+            },
+
+            {
+              immediateRender: false,
+              ...TUNING.secondCourse
+                .copy.to,
+              ease:
+                TUNING.secondCourse
+                  .copy.ease,
+              duration:
+                TUNING.secondCourse
+                  .copy.duration,
+            },
+
+            TUNING.secondCourse
+              .copy.position
+          )
+
+          .fromTo(
+            secondTicket,
+
+            {
+              ...TUNING.secondCourse
+                .ticket.from,
+            },
+
+            {
+              ...TUNING.secondCourse
+                .ticket.to,
+              ease:
+                TUNING.secondCourse
+                  .ticket.ease,
+              duration:
+                TUNING.secondCourse
+                  .ticket.duration,
+            },
+
+            TUNING.secondCourse
+              .ticket.position
           );
       },
 
@@ -1016,8 +1505,8 @@ export function SpecialDishReveal() {
       <section
         ref={sectionRef}
         data-special-dish-reveal
-        aria-label="Scroll to reveal tonight's special dish"
-        className="relative h-[380svh] motion-reduce:h-[220svh] md:h-[430svh] md:motion-reduce:h-[240svh]"
+        aria-label="Scroll to reveal tonight's special dishes"
+        className="relative h-[640svh] motion-reduce:h-[360svh] md:h-[700svh] md:motion-reduce:h-[390svh]"
       >
         <div
           ref={stageRef}
@@ -1063,6 +1552,23 @@ export function SpecialDishReveal() {
           </div>
 
           <div
+            ref={secondSubjectRef}
+            data-reveal-subject="second"
+            className="absolute bottom-[-27svh] left-1/2 z-10 h-[118svh] w-[78.7svh] max-w-[760px] -translate-x-1/2 origin-bottom opacity-0"
+          >
+            <Image
+              src={
+                REVEAL_ASSETS.handPastaDish
+              }
+              alt="A hand lifting a black bowl of creamy garden penne"
+              fill
+              sizes="(max-width: 767px) 155vw, 760px"
+              loading="eager"
+              className="object-contain object-bottom mix-blend-screen"
+            />
+          </div>
+
+          <div
             ref={cloudLeftRef}
             aria-hidden="true"
             data-reveal-cloud="left"
@@ -1102,7 +1608,7 @@ export function SpecialDishReveal() {
             ref={foregroundRef}
             aria-hidden="true"
             data-reveal-cloud="foreground"
-            className="absolute inset-x-[-6%] bottom-[-10%] z-[25] h-[76%]"
+            className="absolute inset-x-[-6%] bottom-[-10%] z-[25] h-[76%] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_100%)] [-webkit-mask-repeat:no-repeat] [mask-repeat:no-repeat]"
           >
             <Image
               src={
@@ -1173,6 +1679,47 @@ export function SpecialDishReveal() {
             </div>
           </div>
 
+          <div
+            ref={secondCopyRef}
+            data-reveal-copy="second"
+            className="absolute bottom-[9svh] left-5 z-30 max-w-[350px] opacity-0 sm:left-8 md:bottom-auto md:top-[29%] lg:left-14"
+          >
+            <p className="font-body text-[9px] uppercase tracking-[0.3em] text-white/58 sm:text-[10px]">
+              Rouge · From the garden
+            </p>
+
+            <h2 className="mt-4 font-display text-[clamp(4rem,7.4vw,8.2rem)] leading-[0.72] tracking-[-0.07em] text-white">
+              Pasta,
+              <br />
+              bright.
+            </h2>
+
+            <p className="mt-6 max-w-[290px] font-body text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">
+              Creamy penne, charred
+              broccoli, peppers and
+              mushrooms, finished with
+              garden herbs.
+            </p>
+
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/reservation"
+                className="group inline-flex min-h-12 items-center justify-center bg-white px-5 font-body text-[9px] uppercase tracking-[0.2em] transition-colors duration-500 hover:bg-primary sm:px-6"
+              >
+                <span className="text-black transition-colors duration-500 group-hover:text-white">
+                  Book a table
+                </span>
+              </Link>
+
+              <Link
+                href="/menu"
+                className="inline-flex min-h-12 items-center justify-center border border-white/30 px-5 font-body text-[9px] uppercase tracking-[0.2em] text-white transition-[border-color,background-color] duration-500 hover:border-white hover:bg-white/10 sm:px-6"
+              >
+                View menu
+              </Link>
+            </div>
+          </div>
+
           <aside
             ref={ticketRef}
             data-reveal-ticket
@@ -1198,6 +1745,39 @@ export function SpecialDishReveal() {
             <p className="mt-5 font-body text-[10px] leading-5 text-black/52">
               Spring allium · red pepper
               · house glaze
+            </p>
+
+            <p className="mt-8 border-t border-black/18 pt-5 font-body text-[8px] uppercase leading-5 tracking-[0.2em] text-black/42">
+              Prepared in limited
+              quantities each evening
+            </p>
+          </aside>
+
+          <aside
+            ref={secondTicketRef}
+            data-reveal-ticket="second"
+            aria-label="Second special dish details"
+            className="absolute right-8 top-[32%] z-30 hidden w-[270px] bg-[#e9e5d8] px-7 py-8 text-[#161814] opacity-0 shadow-[0_30px_100px_rgba(0,0,0,0.38)] md:block lg:right-14 lg:w-[300px]"
+          >
+            <div className="flex items-start justify-between border-b border-black/18 pb-5">
+              <p className="font-body text-[8px] uppercase tracking-[0.25em] text-black/45">
+                Next from the pass
+              </p>
+
+              <span className="font-accent text-3xl leading-none text-primary">
+                R
+              </span>
+            </div>
+
+            <p className="mt-7 font-display text-[2.25rem] leading-[0.9] tracking-[-0.045em]">
+              Garden
+              <br />
+              penne
+            </p>
+
+            <p className="mt-5 font-body text-[10px] leading-5 text-black/52">
+              Broccoli · sweet peppers ·
+              mushrooms · herbs
             </p>
 
             <p className="mt-8 border-t border-black/18 pt-5 font-body text-[8px] uppercase leading-5 tracking-[0.2em] text-black/42">

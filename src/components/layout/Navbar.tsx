@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -24,22 +25,119 @@ import {
   MobileMenu,
 } from "./MobileMenu";
 
+import styles from "./Navbar.module.css";
+
 export function Navbar() {
   const [
     scrolled,
     setScrolled,
   ] = useState(false);
 
-  useEffect(() => {
-    const handleScroll =
-      () => {
-        setScrolled(
-          window.scrollY >
-            40
-        );
-      };
+  const frameRef =
+    useRef<HTMLDivElement>(null);
 
-    handleScroll();
+  const topFadeRef =
+    useRef<HTMLDivElement>(null);
+
+  const displacementRef =
+    useRef<SVGFEDisplacementMapElement | null>(
+      null
+    );
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    const topFade = topFadeRef.current;
+
+    if (!frame || !topFade) {
+      return;
+    }
+
+    let animationFrame = 0;
+
+    const renderMaterial = () => {
+      animationFrame = 0;
+
+      const rawProgress = Math.max(
+        0,
+        Math.min(1, window.scrollY / 150)
+      );
+
+      /* Smoothstep makes the material ease in and settle naturally. */
+      const progress =
+        rawProgress *
+        rawProgress *
+        (3 - 2 * rawProgress);
+
+      frame.style.setProperty(
+        "--glass-progress",
+        progress.toFixed(4)
+      );
+
+      frame.style.setProperty(
+        "--glass-blur",
+        `${(2 * progress).toFixed(2)}px`
+      );
+
+      frame.style.setProperty(
+        "--glass-saturation",
+        `${(10 * progress).toFixed(2)}%`
+      );
+
+      frame.style.setProperty(
+        "--glass-scale-x",
+        (1.035 - 0.035 * progress).toFixed(4)
+      );
+
+      frame.style.setProperty(
+        "--glass-scale-y",
+        (0.94 + 0.06 * progress).toFixed(4)
+      );
+
+      frame.style.setProperty(
+        "--glass-sheen-x",
+        `${(-18 + 34 * progress).toFixed(2)}%`
+      );
+
+      frame.style.setProperty(
+        "--glass-rim-opacity",
+        "0"
+      );
+
+      frame.style.setProperty(
+        "--glass-sheen-opacity",
+        (0.12 + 0.88 * progress).toFixed(4)
+      );
+
+      topFade.style.opacity =
+        (1 - 0.92 * progress).toFixed(4);
+
+      displacementRef.current?.setAttribute(
+        "scale",
+        (14 * progress).toFixed(2)
+      );
+
+      setScrolled((current) => {
+        const next =
+          window.scrollY > 40;
+
+        return current === next
+          ? current
+          : next;
+      });
+    };
+
+    const handleScroll = () => {
+      if (animationFrame) {
+        return;
+      }
+
+      animationFrame =
+        window.requestAnimationFrame(
+          renderMaterial
+        );
+    };
+
+    renderMaterial();
 
     window.addEventListener(
       "scroll",
@@ -49,11 +147,18 @@ export function Navbar() {
       }
     );
 
-    return () =>
+    return () => {
       window.removeEventListener(
         "scroll",
         handleScroll
       );
+
+      if (animationFrame) {
+        window.cancelAnimationFrame(
+          animationFrame
+        );
+      }
+    };
   }, []);
 
   return (
@@ -69,26 +174,8 @@ export function Navbar() {
       ].join(" ")}
     >
       <div
-        className={[
-          "absolute inset-0",
-          "transition-all",
-          "duration-700",
-
-          scrolled
-            ? [
-                "bg-black/40",
-                "backdrop-blur-[10px]",
-                "border-b",
-                "border-white/[0.07]",
-              ].join(
-                " "
-              )
-            : "bg-transparent",
-        ].join(" ")}
-      />
-
-      <div
         aria-hidden="true"
+        ref={topFadeRef}
         className={[
           "absolute",
           "inset-x-0",
@@ -97,33 +184,76 @@ export function Navbar() {
           "bg-gradient-to-b",
           "from-black/45",
           "to-transparent",
-
-          scrolled
-            ? "opacity-0"
-            : "opacity-100",
-
-          "transition-opacity",
-          "duration-700",
         ].join(" ")}
       />
 
       <Container className="relative">
         <div
+          ref={frameRef}
+          data-scrolled={scrolled}
           className={[
-            "pointer-events-auto",
-            "flex",
-            "h-20",
-            "items-center",
-            "justify-between",
-            "transition-[height]",
-            "duration-500",
-            "lg:h-24",
+            styles.navbarFrame,
 
             scrolled
-              ? "lg:h-[76px]"
+              ? styles.scrolled
               : "",
+
+            "pointer-events-auto",
+            "flex",
+            "items-center",
+            "justify-between",
           ].join(" ")}
         >
+          <div
+            aria-hidden="true"
+            className={
+              styles.liquidGlass
+            }
+          >
+            <span
+              aria-hidden="true"
+              className={
+                styles.liquidGlassSheen
+              }
+            />
+          </div>
+
+          <svg
+            aria-hidden="true"
+            className={
+              styles.filterDefinitions
+            }
+            width="0"
+            height="0"
+            focusable="false"
+          >
+            <defs>
+              <filter
+                id="navbar-liquid-refraction"
+                x="-18%"
+                y="-18%"
+                width="136%"
+                height="136%"
+              >
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency=".012 .025"
+                  numOctaves="2"
+                  seed="8"
+                  result="noise"
+                />
+                <feDisplacementMap
+                  ref={displacementRef}
+                  in="SourceGraphic"
+                  in2="noise"
+                  scale="0"
+                  xChannelSelector="R"
+                  yChannelSelector="B"
+                />
+              </filter>
+            </defs>
+          </svg>
+
           <Link
             href="/"
             aria-label={`${restaurant.identity.name} home`}

@@ -1,0 +1,194 @@
+.navbarFrame {
+  position: relative;
+
+  isolation: isolate;
+
+  --glass-progress: 0;
+  --glass-blur: 2px;
+  --glass-saturation: 10%;
+  --glass-scale-x: 1.035;
+  --glass-scale-y: 0.94;
+  --glass-sheen-x: -18%;
+  --glass-rim-opacity: 0;
+  --glass-sheen-opacity: 0.12;
+
+  width: 100%;
+  height: 5rem;
+
+  margin-inline: auto;
+  padding-inline: 0;
+
+  transition:
+    width 720ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin-top 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding-inline 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scrolled {
+  width: 100%;
+  height: 4rem;
+
+  margin-top: 0.75rem;
+  padding-inline: 1.25rem;
+}
+
+.liquidGlass {
+  position: absolute;
+  inset: 0;
+
+  z-index: -1;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 1.125rem;
+
+  background:
+    linear-gradient(128deg,
+      rgb(255 255 255 / 0.15),
+      rgb(255 255 255 / 0.055) 42%,
+      rgb(255 255 255 / 0.09) 72%,
+      rgb(255 255 255 / 0.045)),
+    rgb(10 10 10 / 0.42);
+
+  box-shadow:
+    0 18px 50px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    inset 0 -1px 0 rgb(255 255 255 / 0.06);
+
+  opacity: var(--glass-progress);
+
+  transform:
+    scaleX(var(--glass-scale-x)) scaleY(var(--glass-scale-y));
+
+  /* Keep the core glass readable where SVG backdrop filters are unavailable. */
+  -webkit-backdrop-filter:
+    blur(var(--glass-blur)) saturate(var(--glass-saturation));
+  backdrop-filter:
+    blur(var(--glass-blur)) saturate(var(--glass-saturation));
+
+  /* The refraction pass mirrors the shader reference in supporting browsers. */
+  -webkit-backdrop-filter:
+    blur(var(--glass-blur)) saturate(var(--glass-saturation)) url("#navbar-liquid-refraction");
+  backdrop-filter:
+    blur(var(--glass-blur)) saturate(var(--glass-saturation)) url("#navbar-liquid-refraction");
+
+  will-change:
+    opacity,
+    transform,
+    backdrop-filter;
+}
+
+.liquidGlass::before,
+.liquidGlass::after {
+  content: "";
+
+  position: absolute;
+
+  pointer-events: none;
+}
+
+.liquidGlass::before {
+  inset: 1px;
+
+  border-radius: calc(1.125rem - 1px);
+
+  background:
+    radial-gradient(circle at 14% -12%,
+      rgb(255 255 255 / 0.36),
+      transparent 35%),
+    linear-gradient(112deg,
+      rgb(255 255 255 / 0.14),
+      transparent 37%,
+      rgb(255 255 255 / 0.05) 63%,
+      rgb(255 255 255 / 0.13));
+
+  opacity: 1;
+
+  filter: url("#navbar-liquid-refraction");
+}
+
+.liquidGlass::after {
+  inset: 0;
+
+  border-radius: inherit;
+
+  padding: 1px;
+
+  background:
+    linear-gradient(105deg,
+      rgb(82 244 255 / 0.85),
+      rgb(255 255 255 / 0.82) 23%,
+      rgb(255 129 212 / 0.78) 52%,
+      rgb(255 220 108 / 0.8));
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  filter: blur(0.8px);
+
+  opacity: var(--glass-rim-opacity);
+}
+
+.liquidGlassSheen {
+  position: absolute;
+  top: -65%;
+  left: var(--glass-sheen-x);
+
+  width: 34%;
+  height: 210%;
+
+  background:
+    linear-gradient(90deg,
+      transparent,
+      rgb(255 255 255 / 0.15),
+      rgb(162 235 255 / 0.12),
+      transparent);
+
+  filter: blur(10px);
+
+  opacity: var(--glass-sheen-opacity);
+
+  transform: rotate(17deg);
+
+  mix-blend-mode: screen;
+}
+
+.filterDefinitions {
+  position: absolute;
+  width: 0;
+  height: 0;
+
+  pointer-events: none;
+}
+
+@media (min-width: 64rem) {
+  .navbarFrame {
+    height: 6rem;
+  }
+
+  .scrolled {
+    width: min(calc(100vw - 5rem),
+        max(34rem, 40vw));
+    height: 4.75rem;
+
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .navbarFrame,
+  .liquidGlass,
+  .liquidGlass::before,
+  .liquidGlass::after,
+  .liquidGlassSheen {
+    transition-duration: 0.01ms;
+  }
+}
