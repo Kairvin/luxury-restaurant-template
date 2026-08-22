@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,33 +8,78 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# Next.js / Build & Bundler output
 /.next/
 /out/
-
-# production
 /build
+/dist
+.turbo
 
-# misc
-.DS_Store
+# Testing & Coverage
+/coverage
+*.lcov
+.nyc_output
+
+# Environment & Secrets
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
 *.pem
+*.key
+*.cert
+credentials.json
 
-# debug
+# Debug & Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
+*.log
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+# TypeScript & Linters
 *.tsbuildinfo
 next-env.d.ts
+.eslintcache
+
+# Vercel & Cloud deployments
+.vercel
+
+# Editor & IDE configs
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+.cursor/
+.zed/
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# AI Agent / Tool artifacts & Scratch files
 .claude/
+.gemini/
+.antigravity/
+
+# Temporary & Backup files
+*.before-*
+*.bak
+*.backup
+*.old
+*.orig
